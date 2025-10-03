@@ -24,6 +24,7 @@ import gp2.Mutation;
 import gp2.ValueGetter;
 
 public class Main2024 {
+	// a
 	private static String folderName = "C://Users/Hiroki/Documents/nedo_futami/hexcore5/";
 	private static String exeFileName = "hexcore5_2025.exe";
 	private static String tempFolderName = "C://Users/Hiroki/Documents/nedo_futami/nedo/";
