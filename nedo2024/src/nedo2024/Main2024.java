@@ -23,6 +23,10 @@ import gp2.CrossOver;
 import gp2.Mutation;
 import gp2.ValueGetter;
 
+
+
+
+
 public class Main2024 {
 	private static String folderName = "C://Users/Hiroki/Documents/nedo_futami/hexcore5/";
 	private static String exeFileName = "hexcore5_2025.exe";
@@ -74,8 +78,8 @@ public class Main2024 {
 		ConstraintChecker checker = new ConstraintChecker(maxLengthForConst4, max_numForConst9_merge,
 				max_numForConst9_split, maxDiffLengthForConst10, min_distanceForConst0, constraints);
 
-		int generations = 2;// # of generations (e.g.,1000)
-		int nums = 10;// # of sample populations. (e.g., 500)
+		int generations = 3;// # of generations (e.g.,1000)
+		int nums = 20;// # of sample populations. (e.g., 500)
 		int r = 12; // rows
 		int c = 3; // columns
 
@@ -224,7 +228,7 @@ public class Main2024 {
 							break;
 						}
 						Tree tree2 = ite.next();
-						Tree crossedTrees[] = CrossOver.cross2(tree1, tree2);
+						Tree crossedTrees[] = CrossOver.cross3(tree1, tree2);
 						if (!crossedTrees[0].equals(tree1) && !crossedTrees[1].equals(tree2)
 								&& !alreadyCrossedTrees.contains(crossedTrees[0])
 								&& !alreadyCrossedTrees.contains(crossedTrees[1])) {

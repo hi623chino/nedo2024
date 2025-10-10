@@ -13,6 +13,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Objects;
+
+
+
+class Pair<A, B> {
+    A first;
+    B second;
+
+    Pair(A first, B second) {
+        this.first = first;
+        this.second = second;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Pair)) return false;
+        Pair<?, ?> p = (Pair<?, ?>) o;
+        return Objects.equals(first, p.first) && Objects.equals(second, p.second);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(first, second);
+    }
+
+    @Override
+    public String toString() {
+        return "(" + first + ", " + second + ")";
+    }
+}
 
 public class Tree extends ArrayList<Node> implements Serializable {
 	// Add node in turn from top-left to bottom-right.
@@ -145,6 +176,143 @@ public class Tree extends ArrayList<Node> implements Serializable {
 		return tree2;
 	}
 
+
+	// 親と子供の組み合わせを保持して，同じ部分がある場合それ以外の部分を交換する
+
+	public Set<Tree> copy2(Tree tree2) throws IOException {
+		Set<Pair<TreeSet<Integer>, Integer>> set1 = new HashSet<>();
+		Set<Pair<TreeSet<Integer>, Integer>> set2 = new HashSet<>();
+		Set<Pair<TreeSet<Integer>, Integer>> set3 = new HashSet<>();
+
+		Set<Tree> setTree = new HashSet<>();
+
+		Tree copyTree1 = new Tree(yNum, xNum, checker);
+		Tree copyTree2 = new Tree(yNum, xNum, checker);
+
+		copyTree1.setVal(this.getVal());
+		copyTree2.setVal(tree2.getVal());
+
+		for (int i = 1; i <= this.size(); i++) {
+			Node n = getNode(i);
+			Node n_new = new Node(n.getX(), n.getY(), copyTree1);
+			copyTree1.add(n_new);
+			Set<Node> parents = getNode(i).getParents();
+			Set<Node> children = getNode(i).getChildren();
+			TreeSet<Integer> connectedSet = new TreeSet<>();
+			connectedSet.add(n.getId());
+			for (Node parent : parents) {
+				connectedSet.add(parent.getId());
+			}
+			for (Node child : children) {
+				connectedSet.add(child.getId());
+			}
+			Pair<TreeSet<Integer>, Integer> p = new Pair<>(connectedSet, i);
+			set1.add(p);
+		}
+
+		for (int i = 1; i <= tree2.size(); i++) {
+			Node n = tree2.getNode(i);
+			Node n_new = new Node(n.getX(), n.getY(), copyTree2);
+			copyTree2.add(n_new);
+			Set<Node> parents = getNode(i).getParents();
+			Set<Node> children = getNode(i).getChildren();
+			TreeSet<Integer> connectedSet = new TreeSet<>();
+			connectedSet.add(n.getId());
+			for (Node parent : parents) {
+				connectedSet.add(parent.getId());
+			}
+			for (Node child : children) {
+				connectedSet.add(child.getId());
+			}
+			Pair<TreeSet<Integer>, Integer> p = new Pair<>(connectedSet, i);
+			set2.add(p);
+		}
+
+		for(Pair<TreeSet<Integer>, Integer> p1 : set1) {
+			for(Pair<TreeSet<Integer>, Integer> p2 : set2) {
+				if(p1.first.equals(p2.first)) {
+					set3.add(p1);
+				}
+			}
+		}
+
+		if(set3.size()==0) {
+			setTree.add(this);
+			setTree.add(tree2);
+			return setTree;
+		}
+		//System.out.println(set3);
+
+		//成功した木ができたらset3ループ終了
+		for(Pair<TreeSet<Integer>, Integer> p : set3) {
+			Set<Node> parents = getNode(p.second).getParents();
+			Set<Node> children = getNode(p.second).getChildren();
+			for (Node parent : parents) {
+				copyTree1.getNode(parent.getId()).addChild(copyTree1.getNode(p.second),false,false);
+				}	
+			for (Node child : children) {
+				copyTree1.getNode(p.second).addChild(copyTree1.getNode(child.getId()),false,false);
+				}
+			for(int i=1;i<copyTree1.size();i++) {
+
+				if (!p.first.contains(i)) {
+					Set<Node> parents2 = tree2.getNode(i).getParents();
+					Set<Node> children2 = tree2.getNode(i).getChildren();
+					for (Node parent2 : parents2) {
+						copyTree1.getNode(parent2.getId()).addChild(copyTree1.getNode(i),false,false);
+						}
+					for (Node child2 : children2) {
+						copyTree1.getNode(i).addChild(copyTree1.getNode(child2.getId()),false,false);
+					}
+				}
+			}
+			if(copyTree1.fixAll() && !(copyTree1.equals(this)&&copyTree1.equals(tree2))) {
+				break;
+			}
+		}
+
+		setTree.add(copyTree1);
+		
+		for(Pair<TreeSet<Integer>, Integer> p : set3) {
+			Set<Node> parents = tree2.getNode(p.second).getParents();
+			Set<Node> children = tree2.getNode(p.second).getChildren();
+			for (Node parent : parents) {
+				copyTree2.getNode(parent.getId()).addChild(copyTree2.getNode(p.second),false,false);
+				}	
+			for (Node child : children) {
+				copyTree2.getNode(p.second).addChild(copyTree2.getNode(child.getId()),false,false);
+				}
+			for(int i=1;i<copyTree2.size();i++) {
+
+				if (!p.first.contains(i)) {
+					Set<Node> parents2 = getNode(i).getParents();
+					Set<Node> children2 = getNode(i).getChildren();
+					for (Node parent2 : parents2) {
+						copyTree1.getNode(parent2.getId()).addChild(copyTree1.getNode(i),false,false);
+						}
+					for (Node child2 : children2) {
+						copyTree1.getNode(i).addChild(copyTree1.getNode(child2.getId()),false,false);
+					}
+				}
+			}
+			if(copyTree2.fixAll() && !(copyTree2.equals(this)&&copyTree2.equals(tree2))) {
+				break;
+			}
+		}
+		
+		setTree.add(copyTree2);
+		if(setTree.size()==1){
+			setTree.add(this);
+		}
+		if(setTree.size()==0){
+			setTree.add(this);
+			setTree.add(tree2);
+		}
+		return setTree;
+	}
+
+
+
 	/**
 	 * このtreeのn1の子孫（isDescendents=trueのばあい）の構造を、tree2のn2の子孫の構造に設定する。子孫のsizeは一致していることが保証されちえる。
 	 * 
@@ -154,6 +322,7 @@ public class Tree extends ArrayList<Node> implements Serializable {
 	 * @return
 	 * @throws IOException
 	 */
+	
 	public Tree copy(Tree tree2, Node n1, Node n2, boolean isDescendants) throws IOException {
 		Tree copyTree = new Tree(yNum, xNum, checker);
 		copyTree.setVal(this.getVal());
