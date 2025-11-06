@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Queue;
+import java.util.ArrayDeque;
+
+import gp2.ValueGetter;
 import java.util.Objects;
 
 
@@ -178,8 +182,29 @@ public class Tree extends ArrayList<Node> implements Serializable {
 
 
 	// 親と子供の組み合わせを保持して，同じ部分がある場合それ以外の部分を交換する
+	public void getchildbfs(TreeSet<Integer> set, Node n, Integer num){
+		Queue<Node> queue = new ArrayDeque<>();
+		
+		Set<Node> children = n.getChildren();
+		for(Node child : children){
+			queue.add(child);
+		}
+		while(!queue.isEmpty() && set.size()<num){
+			Node current = queue.poll();
+			set.add(current.getId());
+			for(Node child : current.getChildren()){
+				queue.add(child);
+			}
+		}
+		return ;
+	}
 
 	public Set<Tree> copy2(Tree tree2) throws IOException {
+		String folderName = "C://Users/piros/Documents/nedo_futami/hexcore5/";
+		String exeFileName = "hexcore5_2025.exe";
+		String tempFolderName = "C://Users/piros/Documents/nedo_futami/nedo/";
+		double val=0;
+
 		Set<Pair<TreeSet<Integer>, Integer>> set1 = new HashSet<>();
 		Set<Pair<TreeSet<Integer>, Integer>> set2 = new HashSet<>();
 		Set<Pair<TreeSet<Integer>, Integer>> set3 = new HashSet<>();
@@ -196,38 +221,36 @@ public class Tree extends ArrayList<Node> implements Serializable {
 			Node n = getNode(i);
 			Node n_new = new Node(n.getX(), n.getY(), copyTree1);
 			copyTree1.add(n_new);
-			Set<Node> parents = getNode(i).getParents();
-			Set<Node> children = getNode(i).getChildren();
+		
 			TreeSet<Integer> connectedSet = new TreeSet<>();
 			connectedSet.add(n.getId());
-			for (Node parent : parents) {
-				connectedSet.add(parent.getId());
+
+			getchildbfs(connectedSet, n, (int)(xNum*yNum*0.15));
+			if(connectedSet.size()<=3) {
+				continue;
 			}
-			for (Node child : children) {
-				connectedSet.add(child.getId());
-			}
+
 			Pair<TreeSet<Integer>, Integer> p = new Pair<>(connectedSet, i);
 			set1.add(p);
 		}
+		System.out.println("Set1size: " + set1.size());
 
 		for (int i = 1; i <= tree2.size(); i++) {
 			Node n = tree2.getNode(i);
 			Node n_new = new Node(n.getX(), n.getY(), copyTree2);
 			copyTree2.add(n_new);
-			Set<Node> parents = getNode(i).getParents();
-			Set<Node> children = getNode(i).getChildren();
 			TreeSet<Integer> connectedSet = new TreeSet<>();
 			connectedSet.add(n.getId());
-			for (Node parent : parents) {
-				connectedSet.add(parent.getId());
-			}
-			for (Node child : children) {
-				connectedSet.add(child.getId());
+
+			getchildbfs(connectedSet, n, 5);
+			if(connectedSet.size()<=3) {
+				continue;
 			}
 			Pair<TreeSet<Integer>, Integer> p = new Pair<>(connectedSet, i);
 			set2.add(p);
 		}
-
+		System.out.println("Set2size: "+set2.size());
+		
 		for(Pair<TreeSet<Integer>, Integer> p1 : set1) {
 			for(Pair<TreeSet<Integer>, Integer> p2 : set2) {
 				if(p1.first.equals(p2.first)) {
@@ -236,78 +259,204 @@ public class Tree extends ArrayList<Node> implements Serializable {
 			}
 		}
 
+		System.out.println("Set3size: " + set3.size());
 		if(set3.size()==0) {
 			setTree.add(this);
 			setTree.add(tree2);
 			return setTree;
 		}
-		//System.out.println(set3);
+		
 
-		//成功した木ができたらset3ループ終了
+		//成功した木ができたらループ終了
 		for(Pair<TreeSet<Integer>, Integer> p : set3) {
-			Set<Node> parents = getNode(p.second).getParents();
-			Set<Node> children = getNode(p.second).getChildren();
-			for (Node parent : parents) {
-				copyTree1.getNode(parent.getId()).addChild(copyTree1.getNode(p.second),false,false);
+			Set<Integer>  sharedchildren = new HashSet<Integer>();
+			Set<Integer>  sharedparents = new HashSet<Integer>();
+			Set<Integer>  notsharedchildren = new HashSet<Integer>();
+			Set<Integer>  notsharedparents = new HashSet<Integer>();
+
+			for(Integer sharedp : p.first){
+				Set<Node> parents = getNode(sharedp).getParents();
+				Set<Node> children = getNode(sharedp).getChildren();
+
+			// 共有部分のTree1の親子関係をコピー
+				for (Node parent : parents) {
+				if(p.first.contains(parent.getId())){
+				copyTree1.getNode(parent.getId()).addChild(copyTree1.getNode(sharedp),false,false);
+				}else{
+					sharedchildren.add(sharedp);
 				}	
-			for (Node child : children) {
-				copyTree1.getNode(p.second).addChild(copyTree1.getNode(child.getId()),false,false);
 				}
+				for (Node child : children) {
+				if(p.first.contains(child.getId())){
+				copyTree1.getNode(sharedp).addChild(copyTree1.getNode(child.getId()),false,false);
+				}else{
+					sharedparents.add(sharedp);
+				}
+				}
+			}
+			//共有部分以外の親子関係はTree2からコピー
 			for(int i=1;i<copyTree1.size();i++) {
 
 				if (!p.first.contains(i)) {
 					Set<Node> parents2 = tree2.getNode(i).getParents();
 					Set<Node> children2 = tree2.getNode(i).getChildren();
 					for (Node parent2 : parents2) {
+						if(!p.first.contains(parent2.getId())){
 						copyTree1.getNode(parent2.getId()).addChild(copyTree1.getNode(i),false,false);
+						}else{
+							notsharedchildren.add(i);
 						}
+					}
 					for (Node child2 : children2) {
+						if(!p.first.contains(child2.getId())){
 						copyTree1.getNode(i).addChild(copyTree1.getNode(child2.getId()),false,false);
+					}else{
+						notsharedparents.add(i);
 					}
 				}
+				}
 			}
-			if(copyTree1.fixAll() && !(copyTree1.equals(this)&&copyTree1.equals(tree2))) {
+			//System.out.println("sc"+sharedchildren+"sp"+sharedparents+"nc"+notsharedchildren+"np"+notsharedparents);
+			if(!sharedchildren.isEmpty() && !notsharedparents.isEmpty()){
+				for(Integer sc: sharedchildren){
+					for(Integer np: notsharedparents){
+						copyTree1.getNode(np).addChild(copyTree1.getNode(sc),false,false);
+						notsharedparents.remove(np);
+						break;
+					}
+				}	
+			}
+			if(!sharedparents.isEmpty() && !notsharedchildren.isEmpty()){
+				for(Integer sp: sharedparents){
+					for(Integer nc: notsharedchildren){
+						copyTree1.getNode(sp).addChild(copyTree1.getNode(nc),false,false);
+						notsharedchildren.remove(nc);
+						break;
+					}
+				}	
+			}
+			//System.out.println("shared subtree\n"+ p.first + "crossover example\n" + copyTree1);
+			
+			String fileId = "g0_" + copyTree1.hashCode();
+			val = ValueGetter.CalcExec(copyTree1.yNum, copyTree1.xNum, copyTree1, fileId, folderName, exeFileName, tempFolderName);
+			if(val!=-1 && !(copyTree1.equals(this) || copyTree1.equals(tree2))){
+				System.out.println("Successful copyTree1 ID"+copyTree1.hashCode());
+				setTree.add(copyTree1);
 				break;
+			}else if(copyTree1.equals(this) || copyTree1.equals(tree2)){
+
+				//System.out.println("same tree generated");
 			}
+			// if(copyTree1.fixAll() && !(copyTree1.equals(this) || copyTree1.equals(tree2))) {
+			// 	setTree.add(copyTree1);
+			// 	break;
+			// }else{
+			// 	if(!copyTree1.fixAll()){
+			// 		System.out.print("failed Tree\n"+copyTree1+"\n");
+			// 	}
+			// }
 		}
 
-		setTree.add(copyTree1);
+		
 		
 		for(Pair<TreeSet<Integer>, Integer> p : set3) {
-			Set<Node> parents = tree2.getNode(p.second).getParents();
-			Set<Node> children = tree2.getNode(p.second).getChildren();
-			for (Node parent : parents) {
-				copyTree2.getNode(parent.getId()).addChild(copyTree2.getNode(p.second),false,false);
-				}	
-			for (Node child : children) {
-				copyTree2.getNode(p.second).addChild(copyTree2.getNode(child.getId()),false,false);
+			Set<Integer>  sharedchildren = new HashSet<Integer>();
+			Set<Integer>  sharedparents = new HashSet<Integer>();
+			Set<Integer>  notsharedchildren = new HashSet<Integer>();
+			Set<Integer>  notsharedparents = new HashSet<Integer>();
+			for(Integer sharedp : p.first){
+				Set<Node> parents = tree2.getNode(sharedp).getParents();
+				Set<Node> children = tree2.getNode(sharedp).getChildren();
+				for (Node parent : parents) {
+				if(p.first.contains(parent.getId())){
+				copyTree2.getNode(parent.getId()).addChild(copyTree2.getNode(sharedp),false,false);
+				}else{
+					sharedchildren.add(sharedp);
 				}
+				}
+				for (Node child : children) {
+					
+				if(p.first.contains(child.getId())){
+				copyTree2.getNode(sharedp).addChild(copyTree2.getNode(child.getId()),false,false);
+				}else{
+					sharedparents.add(sharedp);
+				}
+				}
+			}
+
 			for(int i=1;i<copyTree2.size();i++) {
 
 				if (!p.first.contains(i)) {
 					Set<Node> parents2 = getNode(i).getParents();
 					Set<Node> children2 = getNode(i).getChildren();
 					for (Node parent2 : parents2) {
-						copyTree1.getNode(parent2.getId()).addChild(copyTree1.getNode(i),false,false);
+						if(!p.first.contains(parent2.getId())){
+						copyTree2.getNode(parent2.getId()).addChild(copyTree2.getNode(i),false,false);
+						}else{
+							notsharedchildren.add(i);
 						}
+					}
 					for (Node child2 : children2) {
-						copyTree1.getNode(i).addChild(copyTree1.getNode(child2.getId()),false,false);
+						if(!p.first.contains(child2.getId())){
+						copyTree2.getNode(i).addChild(copyTree2.getNode(child2.getId()),false,false);
+						}else{
+							notsharedparents.add(i);
+						}
 					}
 				}
 			}
-			if(copyTree2.fixAll() && !(copyTree2.equals(this)&&copyTree2.equals(tree2))) {
-				break;
+			//System.out.println("sc2"+sharedchildren+"sp2"+sharedparents+"nc2"+notsharedchildren+"np2"+notsharedparents);
+			if(!sharedchildren.isEmpty() && !notsharedparents.isEmpty()){
+				for(Integer sc: sharedchildren){
+					for(Integer np: notsharedparents){
+						copyTree2.getNode(np).addChild(copyTree2.getNode(sc),false,false);
+						notsharedparents.remove(np);
+						break;
+					}
+				}	
 			}
+			if(!sharedparents.isEmpty() && !notsharedchildren.isEmpty()){
+				for(Integer sp: sharedparents){
+					for(Integer nc: notsharedchildren){
+						copyTree2.getNode(sp).addChild(copyTree2.getNode(nc),false,false);
+						notsharedchildren.remove(nc);
+						break;
+					}
+				}	
+			}
+			String fileId = "g0_" + copyTree2.hashCode();
+			val = ValueGetter.CalcExec(copyTree2.yNum, copyTree2.xNum, copyTree2, fileId, folderName, exeFileName, tempFolderName);
+			if(val!=-1 && !(copyTree2.equals(this) || copyTree2.equals(tree2))){
+				System.out.println("Successful copyTree2 ID"+copyTree2.hashCode());
+				setTree.add(copyTree2);
+				break;
+			}else if(copyTree2.equals(this) || copyTree2.equals(tree2)){
+				//System.out.println("same tree generated2");
+			}
+			// if(copyTree2.fixAll() && !(copyTree2.equals(this) || copyTree2.equals(tree2))) {
+				
+			// 	setTree.add(copyTree2);
+			// 	break;
+			// }else{
+			// 	if(!copyTree2.fixAll()){
+			// 		System.out.print("failed Tree\n"+copyTree2+"\n");
+			// 	}
+			// }
 		}
 		
-		setTree.add(copyTree2);
+		
+		if(setTree.size()>0){
+			//System.out.println("successful crossover "+setTree.size()+"");
+		}
 		if(setTree.size()==1){
 			setTree.add(this);
 		}
 		if(setTree.size()==0){
+			//System.out.println("failed crossover");
 			setTree.add(this);
 			setTree.add(tree2);
 		}
+
 		return setTree;
 	}
 

@@ -3,8 +3,10 @@ package nedo2024;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,9 +30,9 @@ import gp2.ValueGetter;
 
 
 public class Main2024 {
-	private static String folderName = "C://Users/Hiroki/Documents/nedo_futami/hexcore5/";
+	private static String folderName = "C://Users/piros/Documents/nedo_futami/hexcore5/";
 	private static String exeFileName = "hexcore5_2025.exe";
-	private static String tempFolderName = "C://Users/Hiroki/Documents/nedo_futami/nedo/";
+	private static String tempFolderName = "C://Users/piros/Documents/nedo_futami/nedo/";
 	// Interface files are automatically generated. Moreover,
 	// target value vs. generations data is saved on
 	// "all_1.csv" in "[tempFolderName]/csv" folder.
@@ -38,7 +40,7 @@ public class Main2024 {
 	// is generated, and so on. Also, "best_1.csv" and "best_2.csv," which save only
 	// (temporal) best values, are created.
 
-	private static String preparedInterfaceFolder = "C://Users/Hiroki/Documents/nedo_futami/interface3";
+	private static String preparedInterfaceFolder = "C:/Users/piros/OneDrive/ドキュメント/nedo_futami/interface3";
 
 	// const1,const2 should be true.
 //	private static boolean constraints[] = { false, true, true, true, true, true, false, false, false, true, true };
@@ -61,7 +63,7 @@ public class Main2024 {
 	private static boolean isSaveInfeasibleFile = false;
 
 	public static void main(String args[]) throws IOException {
-
+		long startTime = System.currentTimeMillis();
 		if (isSaveInfeasibleFile) {
 			System.out.println(
 					"In this mode, even infeasible files will be saved. If you don't require infeasible files, set the isSaveInfeasibleFile to false.");
@@ -78,14 +80,18 @@ public class Main2024 {
 		ConstraintChecker checker = new ConstraintChecker(maxLengthForConst4, max_numForConst9_merge,
 				max_numForConst9_split, maxDiffLengthForConst10, min_distanceForConst0, constraints);
 
-		int generations = 3;// # of generations (e.g.,1000)
-		int nums = 20;// # of sample populations. (e.g., 500)
+		int generations = 50;// # of generations (e.g.,1000)
+		int nums = 30;// # of sample populations. (e.g., 500)
 		int r = 12; // rows
 		int c = 3; // columns
 
-		double mutateProbability = 0.5;
+		double mutateProbability = 0.0;
 		double crossProbability = 0.2;
 		double eliteProbability = 0.1;
+
+		double[] bestValues = new double[generations];
+		double[] averageValues = new double[generations];
+		int[] feasibleNums = new int[generations];
 
 		// If we want to maximize values, set true.
 		boolean isBigBetter = true;
@@ -188,7 +194,15 @@ public class Main2024 {
 			}
 		}
 
-		System.out.println(getResult(trees));
+		System.out.println(getResult(trees,bestValues, averageValues, feasibleNums, 0));
+
+		try (PrintWriter pw = new PrintWriter(new FileWriter("evolution_result.csv"))) {
+            pw.println("generation,best,average,feasible"); // ヘッダ
+                pw.printf("%d,%.4f,%.4f,%d%n", 0, bestValues[0], averageValues[0], feasibleNums[0]);
+            System.out.println("✅ CSV出力完了: evolution_result.csv");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 		for (int gene = 1; gene < generations; gene++) {
 			System.out.println("generations = " + gene);
@@ -228,27 +242,46 @@ public class Main2024 {
 							break;
 						}
 						Tree tree2 = ite.next();
+						while(tree1.equals(tree2)) {
+							tree2 = ite.next();
+						}
 						Tree crossedTrees[] = CrossOver.cross3(tree1, tree2);
-						if (!crossedTrees[0].equals(tree1) && !crossedTrees[1].equals(tree2)
-								&& !alreadyCrossedTrees.contains(crossedTrees[0])
-								&& !alreadyCrossedTrees.contains(crossedTrees[1])) {
-
+						if (!crossedTrees[0].equals(tree1) && !crossedTrees[0].equals(tree2)
+								&& !alreadyCrossedTrees.contains(crossedTrees[0])) {
 							Tree c1 = Util.adjustLength(crossedTrees[0]);
-							Tree c2 = Util.adjustLength(crossedTrees[1]);
+							//Tree c2 = Util.adjustLength(crossedTrees[1]);
 
 							passedTrees.add(tree1);
 							passedTrees.add(tree2);
 							alreadyCrossedTrees.add(c1);
-							alreadyCrossedTrees.add(c2);
+							System.out.println("Added crossed tree ID"+c1.hashCode());
+							//alreadyCrossedTrees.add(c2);
 							successCrossCount++;
 							trees.add(crossedTrees[0]);
-							trees.add(crossedTrees[1]);
-							if (successCrossCount >= targetCrossCount) {
+							//trees.add(crossedTrees[1]);
+							if (successCrossCount >= targetCrossCount*2) {
 								crossEnough = true;
 								break;
 							}
 
-						} else {
+						}
+						if(!crossedTrees[1].equals(tree1) && !crossedTrees[1].equals(tree2)
+								&& !alreadyCrossedTrees.contains(crossedTrees[1])) {
+							//Tree c1 = Util.adjustLength(crossedTrees[0]);
+							Tree c2 = Util.adjustLength(crossedTrees[1]);
+
+							passedTrees.add(tree1);
+							passedTrees.add(tree2);
+							//alreadyCrossedTrees.add(c1);
+							alreadyCrossedTrees.add(c2);
+							successCrossCount++;
+							trees.add(crossedTrees[1]);
+							System.out.println("Added crossed tree ID"+c2.hashCode());
+							//trees.add(crossedTrees[1]);
+							if (successCrossCount >= targetCrossCount*2) {
+								crossEnough = true;
+								break;
+							}
 
 						}
 					}
@@ -338,11 +371,21 @@ public class Main2024 {
 
 			}
 
-			System.out.println(getResult(trees));
+			System.out.println(getResult(trees,bestValues, averageValues, feasibleNums, gene));
+			try (PrintWriter pw = new PrintWriter(new FileWriter("evolution_result.csv",true))) {
+            //pw.println("generation,best,average,feasible"); // ヘッダ
+            //for (int g = 0; g < generations; g++) {
+                pw.printf("%d,%.4f,%.4f,%d%n", gene, bestValues[gene], averageValues[gene], feasibleNums[gene]);
+            //}
+            System.out.println("✅ CSV出力完了: evolution_result.csv");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 		}
 
+		
 		//// swapping
-		System.out.println("Swap Positions of the top　" + swappingTargetTreeNum + "th trees.");
+		System.out.println("Swap Positions of the top" + swappingTargetTreeNum + "th trees.");
 
 		if (bestTree == null) {
 			System.out.println("There are no feasible trees.");
@@ -436,6 +479,10 @@ public class Main2024 {
 			}
 		}
 		ValueGetter.createXmlFile(tempFolderName + "best_" + bestTree.getVal() + ".xml", bestTree);
+		
+		long endTime = System.currentTimeMillis();
+		long elapsedTime = endTime - startTime;
+		System.out.println("Total elapsed time: " + (elapsedTime / 1000.0) + " seconds.");
 	}
 
 	private static int getDiversity(List<Tree> trees) {
@@ -506,7 +553,7 @@ public class Main2024 {
 		return newTrees;
 	}
 
-	public static Result getResult(List<Tree> trees) {
+	public static Result getResult(List<Tree> trees,double[] bestValues, double[] averageValues, int[] feasibleNums, int generation) {
 		int okNum = 0;
 		double average = 0.0;
 		double max = -100;
@@ -526,6 +573,11 @@ public class Main2024 {
 			}
 		}
 		average /= okNum;
+
+		bestValues[generation] = max;
+		averageValues[generation] = average;
+		feasibleNums[generation] = okNum;
+		
 		Result r = new Result(okNum, average, max, min, getDiversity(trees));
 		return r;
 	}
