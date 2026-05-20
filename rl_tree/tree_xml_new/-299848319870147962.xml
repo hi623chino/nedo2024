@@ -1,0 +1,62 @@
+<hex>
+<conf r="12" c="3"/>
+<seg in="1" out="2"/>
+<seg in="2" out="29"/>
+<seg in="3" out="6"/>
+<seg in="4" out="19"/>
+<seg in="5" out="36"/>
+<seg in="6" out="1"/>
+<seg in="7" out="30"/>
+<seg in="8" out="7"/>
+<seg in="9" out="34"/>
+<seg in="10" out="35"/>
+<seg in="12" out="9"/>
+<seg in="13" out="15"/>
+<seg in="14" out="17"/>
+<seg in="15" out="32"/>
+<seg in="16" out="3"/>
+<seg in="17" out="10"/>
+<seg in="18" out="16"/>
+<seg in="19" out="26"/>
+<seg in="20" out="22"/>
+<seg in="21" out="4"/>
+<seg in="22" out="11"/>
+<seg in="23" out="24"/>
+<seg in="24" out="20"/>
+<seg in="25" out="14"/>
+<seg in="26" out="8"/>
+<seg in="27" out="5"/>
+<seg in="28" out="33"/>
+<seg in="29" out="28"/>
+<seg in="30" out="18"/>
+<seg in="31" out="12"/>
+<seg in="32" out="23"/>
+<seg in="33" out="31"/>
+<seg in="34" out="25"/>
+<seg in="35" out="27"/>
+<seg in="36" out="13"/>
+    <ref mode="CSV" name="R32.CSV"/>
+    <air mode="CSV" name="AIR.CSV"/>
+    <hx_type type="2" />
+    <correlation type="1" />
+    <param type="double" name="tube_D_o" val="0.00635"/>
+    <param type="double" name="tube_D_i" val="0.00535"/>
+    <param type="double" name="tube_L" val="0.5"/>
+    <param type="double" name="tube_T" val="0.0005"/>
+    <param type="double" name="tube_Hspace" val="0.016"/>
+    <param type="double" name="tube_Vspace" val="0.01905"/>
+    <param type="double" name="tube_beta" val="0.0"/>
+    <param type="double" name="tube_k" val="0.205"/>
+    <param type="double" name="fin_FPM" val="0.0"/>
+    <param type="double" name="fin_P" val="0.0"/>
+    <param type="double" name="fin_S" val="0.0012"/>
+    <param type="double" name="fin_T" val="0.000115"/>
+    <param type="double" name="fin_k" val="0.205"/>
+    <param type="double" name="T_a_inlet" val="26.0"/>
+    <param type="double" name="P_a_inlet" val="101.325"/>
+    <param type="double" name="T_a_outlet" val="18.0"/>
+    <param type="double" name="superheat" val="5.0"/>
+    <param type="double" name="T_r_cond" val="35.0"/>
+    <param type="double" name="subcool" val="5.0"/>
+    <param type="double" name="evap_duty" val="3.0"/>
+    </hex>
